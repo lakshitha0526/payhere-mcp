@@ -32,6 +32,7 @@ Set the following environment variables. Copy `.env.example` to `.env` for local
 | `PAYHERE_MERCHANT_SECRET` | yes | Domain-specific secret |
 | `PAYHERE_APP_ID` | yes | From Settings → Business Apps |
 | `PAYHERE_APP_SECRET` | yes | App secret paired with `PAYHERE_APP_ID` |
+| `PAYHERE_DOMAIN` | optional | Whitelisted domain from your PayHere Business App's "Allowed Domains" field (no scheme). Sent as a Referer header. Required if your PayHere account enforces domain-based access. |
 
 ### Claude Code setup
 

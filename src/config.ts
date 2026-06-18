@@ -13,6 +13,12 @@ export interface PayHereConfig {
 	merchantSecret: string;
 	appId: string;
 	appSecret: string;
+	/**
+	 * Optional whitelisted domain (bare, no scheme) from PayHere's Allowed
+	 * Domains. When set, requests send a `Referer: https://<domain>/` header,
+	 * which PayHere accounts with domain-based access enforcement require.
+	 */
+	domain?: string;
 	/** Base URL for the merchant API — depends on mode. */
 	baseUrl: string;
 	/** Base URL for the hosted checkout — depends on mode. */
@@ -40,6 +46,12 @@ function parseMode(raw: string | undefined): PayHereMode {
 	return mode;
 }
 
+/** Read an optional env var, trimmed; undefined when missing or blank. */
+function optionalEnv(name: string): string | undefined {
+	const value = process.env[name]?.trim();
+	return value ? value : undefined;
+}
+
 export function loadConfig(): PayHereConfig {
 	const mode = parseMode(process.env.PAYHERE_MODE);
 	const base = mode === "live" ? LIVE_BASE : SANDBOX_BASE;
@@ -50,6 +62,7 @@ export function loadConfig(): PayHereConfig {
 		merchantSecret: requireEnv("PAYHERE_MERCHANT_SECRET"),
 		appId: requireEnv("PAYHERE_APP_ID"),
 		appSecret: requireEnv("PAYHERE_APP_SECRET"),
+		domain: optionalEnv("PAYHERE_DOMAIN"),
 		baseUrl: `${base}/merchant/v1`,
 		checkoutUrl: `${base}/pay/checkout`,
 	};
