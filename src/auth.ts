@@ -29,6 +29,12 @@ export interface AccessToken {
 
 export interface AuthClient {
 	getAccessToken(): Promise<string>;
+	/**
+	 * Epoch ms when the currently cached token expires, or null if no token is
+	 * cached yet (or the last fetch failed). Lets diagnostics (verify_credentials)
+	 * report remaining token lifetime without forcing a fetch.
+	 */
+	getCachedTokenExpiry(): number | null;
 }
 
 /** Seconds of headroom subtracted from `expires_in` to avoid expiry races. */
@@ -126,6 +132,10 @@ export function createAuthClient(config: PayHereConfig): AuthClient {
 				// Always clear, success or failure, so the next call can retry.
 				inflightRequest = null;
 			}
+		},
+
+		getCachedTokenExpiry(): number | null {
+			return cached ? cached.expiresAt : null;
 		},
 	};
 }

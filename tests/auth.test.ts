@@ -189,3 +189,26 @@ describe("createAuthClient error handling", () => {
 		}
 	});
 });
+
+describe("createAuthClient.getCachedTokenExpiry", () => {
+	it("is null before any fetch, the expiry after success, and null after a failed fetch", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(0);
+		fetchMock.mockResolvedValue(makeResponse(TOKEN_BODY));
+		const client = createAuthClient(config);
+
+		// Nothing cached yet.
+		expect(client.getCachedTokenExpiry()).toBeNull();
+
+		// After a successful fetch: expiresAt = 0 + (599 - 30) * 1000 = 569_000.
+		await client.getAccessToken();
+		expect(client.getCachedTokenExpiry()).toBe(569_000);
+
+		// A fresh client whose fetch fails caches nothing.
+		fetchMock.mockReset();
+		fetchMock.mockRejectedValue(new Error("ECONNREFUSED"));
+		const failing = createAuthClient(config);
+		await expect(failing.getAccessToken()).rejects.toThrow(/network error/);
+		expect(failing.getCachedTokenExpiry()).toBeNull();
+	});
+});
