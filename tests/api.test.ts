@@ -108,6 +108,31 @@ describe("getPaymentsByOrderId", () => {
 		expect(records[1]?.payment_id).toBe("PAY2");
 	});
 
+	it("coerces a numeric payment_id (as PayHere actually returns it) to a string", async () => {
+		// Real sandbox retrieval payload: payment_id arrives as a JSON *number*,
+		// with nested customer/amount_detail/etc. riding along via passthrough.
+		// Regression for "PayHere API returned unexpected response shape".
+		const real = {
+			payment_id: 320032619523,
+			order_id: "3b2e306f-d007-42cb-a7b6-85fd89406998",
+			date: "2026-06-18 23:53:27",
+			description: "Web Audit Report",
+			status: "RECEIVED",
+			currency: "LKR",
+			amount: 4500.0,
+			customer: { fist_name: "Lakshitha", last_name: "Supun" },
+			amount_detail: { gross: 4500.0, fee: 148.5, net: 4351.5 },
+		};
+		fetchMock.mockResolvedValue(envelope([real]));
+		const api = createPayHereApi(config, auth);
+
+		const records = await api.getPaymentsByOrderId("3b2e306f-d007-42cb-a7b6-85fd89406998");
+
+		expect(records[0]?.payment_id).toBe("320032619523");
+		expect(records[0]?.amount).toBe(4500);
+		expect(records[0]?.amount_detail).toEqual({ gross: 4500.0, fee: 148.5, net: 4351.5 });
+	});
+
 	it("passes through PayHere fields not present in the schema", async () => {
 		const enriched = {
 			...PAYMENT,
@@ -125,8 +150,15 @@ describe("getPaymentsByOrderId", () => {
 });
 
 describe("refundPayment", () => {
+	// Real sandbox refund envelope: data is a bare numeric refund-transaction id.
+	const REFUND_RESPONSE = {
+		status: 1,
+		msg: "Successfully processed the refund",
+		data: 560034237057,
+	};
+
 	it("sends only payment_id and description for a full refund", async () => {
-		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		fetchMock.mockResolvedValue(makeResponse(REFUND_RESPONSE));
 		const api = createPayHereApi(config, auth);
 
 		const result = await api.refundPayment({
@@ -134,7 +166,11 @@ describe("refundPayment", () => {
 			description: "Customer request",
 		});
 
-		expect(result).toEqual({ status: 1, msg: "Refunded", payment_id: "PAY1" });
+		expect(result).toEqual({
+			status: 1,
+			msg: "Successfully processed the refund",
+			data: "560034237057",
+		});
 
 		const [url, init] = fetchMock.mock.calls[0] ?? [];
 		expect(url).toBe(REFUND_URL);
@@ -148,7 +184,7 @@ describe("refundPayment", () => {
 	});
 
 	it("includes a 2dp-formatted amount for a partial refund", async () => {
-		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		fetchMock.mockResolvedValue(makeResponse(REFUND_RESPONSE));
 		const api = createPayHereApi(config, auth);
 
 		await api.refundPayment({
@@ -163,6 +199,16 @@ describe("refundPayment", () => {
 			description: "Partial",
 			amount: "100.50",
 		});
+	});
+
+	it("coerces the numeric refund id (PayHere's `data`) to a string", async () => {
+		fetchMock.mockResolvedValue(makeResponse(REFUND_RESPONSE));
+		const api = createPayHereApi(config, auth);
+
+		const result = await api.refundPayment({ paymentId: "PAY1", description: "x" });
+
+		expect(result.data).toBe("560034237057");
+		expect(typeof result.data).toBe("string");
 	});
 });
 
@@ -249,7 +295,7 @@ describe("Referer header", () => {
 		const [, getInit] = fetchMock.mock.calls[0] ?? [];
 		expect(getInit?.headers.Referer).toBe("https://mysite.com/");
 
-		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		fetchMock.mockResolvedValue(envelope(560034237057));
 		await api.refundPayment({ paymentId: "PAY1", description: "Customer request" });
 		const [, refundInit] = fetchMock.mock.calls[1] ?? [];
 		expect(refundInit?.headers.Referer).toBe("https://mysite.com/");
@@ -263,7 +309,7 @@ describe("Referer header", () => {
 		const [, getInit] = fetchMock.mock.calls[0] ?? [];
 		expect(getInit?.headers).not.toHaveProperty("Referer");
 
-		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		fetchMock.mockResolvedValue(envelope(560034237057));
 		await api.refundPayment({ paymentId: "PAY1", description: "Customer request" });
 		const [, refundInit] = fetchMock.mock.calls[1] ?? [];
 		expect(refundInit?.headers).not.toHaveProperty("Referer");

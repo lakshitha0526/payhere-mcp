@@ -21,6 +21,7 @@ import type { PayHereConfig } from "./config.js";
 import { formatAmount } from "./signature.js";
 
 export interface PaymentRecord {
+	/** Normalised to string — PayHere's retrieval API returns this as a number. */
 	payment_id: string;
 	order_id: string;
 	date: string;
@@ -34,9 +35,12 @@ export interface PaymentRecord {
 }
 
 export interface RefundResult {
+	/** Envelope status — 1 on success. */
 	status: number;
+	/** Envelope message, e.g. "Successfully processed the refund". */
 	msg: string;
-	payment_id?: string;
+	/** PayHere's refund transaction id (the envelope's `data` field), as a string. */
+	data: string;
 }
 
 export interface PayHereApi {
@@ -70,7 +74,10 @@ const envelopeSchema = z
  */
 const paymentRecordSchema = z
 	.object({
-		payment_id: z.string(),
+		// PayHere's retrieval API returns payment_id as a JSON number (e.g.
+		// 320032619523). Coerce to string so it matches PaymentRecord and feeds
+		// straight into issue_refund, which expects a string payment_id.
+		payment_id: z.coerce.string(),
 		order_id: z.string(),
 		date: z.string(),
 		description: z.string().optional(),
@@ -82,11 +89,16 @@ const paymentRecordSchema = z
 
 const paymentArraySchema = z.array(paymentRecordSchema);
 
-const refundResultSchema = z.object({
-	status: z.number(),
-	msg: z.string(),
-	payment_id: z.string().optional(),
-});
+/**
+ * PayHere's refund response carries the refund transaction id in the envelope's
+ * `data` field as a number (e.g. 560034237057) — NOT a nested object. Accept
+ * number or string and normalise to string: consistent with payment_id and
+ * precision-safe for large ids.
+ */
+const refundIdSchema = z.union([z.string(), z.number()]).transform((value) => String(value));
+
+/** The parsed PayHere response envelope. The `data` shape varies per endpoint. */
+type PayHereEnvelope = { status: number; msg: string; data: unknown };
 
 /**
  * Create the PayHere REST client.
@@ -101,7 +113,11 @@ export function createPayHereApi(config: PayHereConfig, auth: AuthClient): PayHe
 	 * Auth errors are intentionally NOT caught here — getAccessToken() already
 	 * throws well-formatted messages, so wrapping them would only obscure them.
 	 */
-	async function sendRequest(method: "GET" | "POST", url: string, body?: string): Promise<unknown> {
+	async function sendRequest(
+		method: "GET" | "POST",
+		url: string,
+		body?: string,
+	): Promise<PayHereEnvelope> {
 		const token = await auth.getAccessToken();
 
 		const headers: Record<string, string> = {
@@ -146,13 +162,13 @@ export function createPayHereApi(config: PayHereConfig, auth: AuthClient): PayHe
 			throw new Error(`PayHere API error (status=${envelope.data.status}): ${envelope.data.msg}`);
 		}
 
-		return envelope.data.data;
+		return { status: envelope.data.status, msg: envelope.data.msg, data: envelope.data.data };
 	}
 
 	return {
 		async getPaymentsByOrderId(orderId): Promise<PaymentRecord[]> {
 			const url = `${config.baseUrl}/payment/search?order_id=${encodeURIComponent(orderId)}`;
-			const data = await sendRequest("GET", url);
+			const { data } = await sendRequest("GET", url);
 
 			const parsed = paymentArraySchema.safeParse(data);
 			if (!parsed.success) {
@@ -171,17 +187,17 @@ export function createPayHereApi(config: PayHereConfig, auth: AuthClient): PayHe
 				body.amount = formatAmount(input.amount);
 			}
 
-			const data = await sendRequest(
+			const envelope = await sendRequest(
 				"POST",
 				`${config.baseUrl}/payment/refund`,
 				JSON.stringify(body),
 			);
 
-			const parsed = refundResultSchema.safeParse(data);
-			if (!parsed.success) {
+			const refundId = refundIdSchema.safeParse(envelope.data);
+			if (!refundId.success) {
 				throw new Error("PayHere API returned unexpected response shape");
 			}
-			return parsed.data;
+			return { status: envelope.status, msg: envelope.msg, data: refundId.data };
 		},
 	};
 }
