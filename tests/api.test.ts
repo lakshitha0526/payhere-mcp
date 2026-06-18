@@ -239,3 +239,33 @@ describe("error handling", () => {
 		}
 	});
 });
+
+describe("Referer header", () => {
+	it("includes Referer: https://<domain>/ on both endpoints when a domain is set", async () => {
+		const api = createPayHereApi({ ...config, domain: "mysite.com" }, auth);
+
+		fetchMock.mockResolvedValue(envelope([PAYMENT]));
+		await api.getPaymentsByOrderId("ORD1");
+		const [, getInit] = fetchMock.mock.calls[0] ?? [];
+		expect(getInit?.headers.Referer).toBe("https://mysite.com/");
+
+		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		await api.refundPayment({ paymentId: "PAY1", description: "Customer request" });
+		const [, refundInit] = fetchMock.mock.calls[1] ?? [];
+		expect(refundInit?.headers.Referer).toBe("https://mysite.com/");
+	});
+
+	it("omits the Referer header on both endpoints when no domain is set", async () => {
+		const api = createPayHereApi(config, auth); // config has no domain
+
+		fetchMock.mockResolvedValue(envelope([PAYMENT]));
+		await api.getPaymentsByOrderId("ORD1");
+		const [, getInit] = fetchMock.mock.calls[0] ?? [];
+		expect(getInit?.headers).not.toHaveProperty("Referer");
+
+		fetchMock.mockResolvedValue(envelope({ status: 1, msg: "Refunded", payment_id: "PAY1" }));
+		await api.refundPayment({ paymentId: "PAY1", description: "Customer request" });
+		const [, refundInit] = fetchMock.mock.calls[1] ?? [];
+		expect(refundInit?.headers).not.toHaveProperty("Referer");
+	});
+});

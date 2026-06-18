@@ -111,6 +111,10 @@ export function createPayHereApi(config: PayHereConfig, auth: AuthClient): PayHe
 		if (body !== undefined) {
 			headers["Content-Type"] = "application/json";
 		}
+		// PayHere accounts with domain enforcement match this against Allowed Domains.
+		if (config.domain) {
+			headers.Referer = `https://${config.domain}/`;
+		}
 
 		let response: Response;
 		try {

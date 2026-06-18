@@ -212,3 +212,25 @@ describe("createAuthClient.getCachedTokenExpiry", () => {
 		expect(failing.getCachedTokenExpiry()).toBeNull();
 	});
 });
+
+describe("createAuthClient Referer header", () => {
+	it("sends Referer: https://<domain>/ when a domain is configured", async () => {
+		fetchMock.mockResolvedValue(makeResponse(TOKEN_BODY));
+		const client = createAuthClient({ ...config, domain: "mysite.com" });
+
+		await client.getAccessToken();
+
+		const [, init] = fetchMock.mock.calls[0] ?? [];
+		expect(init?.headers.Referer).toBe("https://mysite.com/");
+	});
+
+	it("omits the Referer header entirely when no domain is configured", async () => {
+		fetchMock.mockResolvedValue(makeResponse(TOKEN_BODY));
+		const client = createAuthClient(config); // config has no domain
+
+		await client.getAccessToken();
+
+		const [, init] = fetchMock.mock.calls[0] ?? [];
+		expect(init?.headers).not.toHaveProperty("Referer");
+	});
+});

@@ -70,14 +70,20 @@ export function createAuthClient(config: PayHereConfig): AuthClient {
 
 	/** Perform the actual token request + parse. No caching concerns live here. */
 	async function fetchToken(): Promise<AccessToken> {
+		const headers: Record<string, string> = {
+			Authorization: `Basic ${basicCredential}`,
+			"Content-Type": "application/x-www-form-urlencoded",
+		};
+		// PayHere accounts with domain enforcement match this against Allowed Domains.
+		if (config.domain) {
+			headers.Referer = `https://${config.domain}/`;
+		}
+
 		let response: Response;
 		try {
 			response = await fetch(tokenUrl, {
 				method: "POST",
-				headers: {
-					Authorization: `Basic ${basicCredential}`,
-					"Content-Type": "application/x-www-form-urlencoded",
-				},
+				headers,
 				body: "grant_type=client_credentials",
 			});
 		} catch (err) {
