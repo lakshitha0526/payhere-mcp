@@ -18,7 +18,10 @@ export function registerIssueRefund(server: McpServer, _api: PayHereApi): void {
 				"or set it for a partial refund. Returns the PayHere refund status.",
 			inputSchema: {
 				paymentId: z.string().min(1).describe("PayHere payment_id (from get_payment or notify)"),
-				description: z.string().min(1).describe("Reason / note for the refund — visible to the merchant"),
+				description: z
+					.string()
+					.min(1)
+					.describe("Reason / note for the refund — visible to the merchant"),
 				amount: z
 					.number()
 					.positive()

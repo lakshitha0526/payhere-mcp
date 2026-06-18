@@ -32,9 +32,7 @@ export function registerGenerateSignature(server: McpServer, config: PayHereConf
 				"signature in one shot. Uses the merchant secret from the server's " +
 				"environment — never include the secret in tool arguments.",
 			inputSchema: {
-				mode: z
-					.enum(["checkout", "notify"])
-					.describe("Which hash variant to compute"),
+				mode: z.enum(["checkout", "notify"]).describe("Which hash variant to compute"),
 				merchantId: z
 					.string()
 					.optional()
@@ -66,7 +64,9 @@ export function registerGenerateSignature(server: McpServer, config: PayHereConf
 				expectedMd5Sig: z
 					.string()
 					.optional()
-					.describe("Optional for mode='notify'. If provided, returns verification result instead of just the hash."),
+					.describe(
+						"Optional for mode='notify'. If provided, returns verification result instead of just the hash.",
+					),
 			},
 		},
 		async (args) => {
@@ -75,9 +75,7 @@ export function registerGenerateSignature(server: McpServer, config: PayHereConf
 
 			if (args.mode === "checkout") {
 				if (args.amount === undefined || args.currency === undefined) {
-					return errorResult(
-						"mode='checkout' requires both `amount` and `currency`.",
-					);
+					return errorResult("mode='checkout' requires both `amount` and `currency`.");
 				}
 				const hash = computeCheckoutHash({
 					merchantId,

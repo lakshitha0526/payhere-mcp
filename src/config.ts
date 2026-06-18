@@ -26,8 +26,7 @@ function requireEnv(name: string): string {
 	const value = process.env[name];
 	if (!value || value.trim() === "") {
 		throw new Error(
-			`Missing required environment variable: ${name}. ` +
-				`Copy .env.example to .env and fill in your PayHere credentials.`,
+			`Missing required environment variable: ${name}. Copy .env.example to .env and fill in your PayHere credentials.`,
 		);
 	}
 	return value.trim();
