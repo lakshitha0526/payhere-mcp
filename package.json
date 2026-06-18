@@ -1,0 +1,63 @@
+{
+  "name": "@lk-pay/payhere-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for PayHere — Sri Lanka's payment gateway. Lets developers retrieve payments, issue refunds, generate checkout payloads, and compute PayHere signatures from any MCP-aware client (Claude Code, etc).",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "payhere",
+    "payments",
+    "sri-lanka",
+    "lk-pay"
+  ],
+  "license": "MIT",
+  "author": "Lakshitha <lakshitha0526@github>",
+  "homepage": "https://github.com/lakshitha0526/payhere-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lakshitha0526/payhere-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lakshitha0526/payhere-mcp/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "payhere-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src tests",
+    "lint:fix": "biome check --write src tests",
+    "format": "biome format --write src tests",
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
