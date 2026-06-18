@@ -72,7 +72,7 @@ beforeEach(() => {
 	fetchMock = vi.fn();
 	vi.stubGlobal("fetch", fetchMock);
 	getAccessToken = vi.fn().mockResolvedValue(TOKEN_CANARY);
-	auth = { getAccessToken };
+	auth = { getAccessToken, getCachedTokenExpiry: () => null };
 });
 
 afterEach(() => {
