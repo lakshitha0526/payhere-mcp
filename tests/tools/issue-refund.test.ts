@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PayHereApi } from "../../src/api.js";
 import { handleIssueRefund } from "../../src/tools/issue-refund.js";
 
-const REFUND_OK = { status: 1, msg: "Refunded", payment_id: "PAY1" };
+const REFUND_OK = { status: 1, msg: "Successfully processed the refund", data: "560034237057" };
 
 type ToolResult = { content: Array<{ type: string; text: string }>; isError?: boolean };
 
