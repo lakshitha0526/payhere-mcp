@@ -112,10 +112,7 @@ export function computeNotifyHash(input: NotifyHashInput): string {
  * Returns true if the provided md5sig matches what we'd compute locally —
  * i.e. the notify payload is authentic and untampered.
  */
-export function verifyNotifyHash(
-	input: NotifyHashInput,
-	providedMd5Sig: string,
-): boolean {
+export function verifyNotifyHash(input: NotifyHashInput, providedMd5Sig: string): boolean {
 	const expected = computeNotifyHash(input);
 	return timingSafeEqualHex(expected, providedMd5Sig.toUpperCase());
 }

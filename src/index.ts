@@ -21,9 +21,7 @@ async function main(): Promise<void> {
 	await server.connect(transport);
 
 	// Use stderr for any diagnostic output — stdout is reserved for JSON-RPC.
-	console.error(
-		`[payhere-mcp] ready in ${config.mode} mode for merchant ${config.merchantId}`,
-	);
+	console.error(`[payhere-mcp] ready in ${config.mode} mode for merchant ${config.merchantId}`);
 }
 
 main().catch((err) => {

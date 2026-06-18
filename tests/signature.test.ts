@@ -205,9 +205,7 @@ describe("verifyNotifyHash", () => {
 
 	it("returns false when status_code is forged", () => {
 		// Attacker tries to claim success with a hash computed for a failed payment.
-		expect(verifyNotifyHash({ ...validInput, statusCode: "-1" }, EXPECTED.notifyHash)).toBe(
-			false,
-		);
+		expect(verifyNotifyHash({ ...validInput, statusCode: "-1" }, EXPECTED.notifyHash)).toBe(false);
 	});
 
 	it("returns false when amount is tampered with", () => {
@@ -221,8 +219,6 @@ describe("verifyNotifyHash", () => {
 	});
 
 	it("returns false for a completely unrelated hash", () => {
-		expect(
-			verifyNotifyHash(validInput, "00000000000000000000000000000000"),
-		).toBe(false);
+		expect(verifyNotifyHash(validInput, "00000000000000000000000000000000")).toBe(false);
 	});
 });
