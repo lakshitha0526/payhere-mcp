@@ -1,7 +1,7 @@
 # @lk-pay/payhere-mcp
 
 [![npm](https://img.shields.io/npm/v/@lk-pay/payhere-mcp.svg)](https://www.npmjs.com/package/@lk-pay/payhere-mcp)
-[![license](https://img.shields.io/npm/l/@lk-pay/payhere-mcp.svg)](./LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 A Model Context Protocol server for [PayHere](https://www.payhere.lk), Sri Lanka's payment gateway. It exposes PayHere's Merchant API and checkout flow as tools any MCP-aware client can call.
 
