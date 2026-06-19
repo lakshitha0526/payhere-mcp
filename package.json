@@ -1,6 +1,6 @@
 {
   "name": "@lk-pay/payhere-mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Model Context Protocol server for PayHere — Sri Lanka's payment gateway. Lets developers retrieve payments, issue refunds, generate checkout payloads, and compute PayHere signatures from any MCP-aware client (Claude Code, etc).",
   "keywords": [
     "mcp",
